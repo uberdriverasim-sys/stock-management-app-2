@@ -140,7 +140,7 @@ function MainApp() {
 				zIndex: 1000
 			}}>
 				<span style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>
-					👤 {userProfile.name} {userProfile.city && `(${userProfile.city})`}
+					👤 {effectiveProfile.name} {effectiveProfile.city && `(${effectiveProfile.city})`}
 				</span>
 				<button
 					onClick={signOut}
