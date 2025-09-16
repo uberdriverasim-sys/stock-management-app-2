@@ -22,7 +22,7 @@ function MainApp() {
 			const timer = setTimeout(() => {
 				console.warn('⚠️ Loading timeout - showing login');
 				setLoadingTimeout(true);
-			}, 5000); // 5 second timeout
+			}, 3000); // 3 second timeout
 
 			return () => clearTimeout(timer);
 		}

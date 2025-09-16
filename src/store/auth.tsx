@@ -100,18 +100,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('👤 Loading user profile for:', authUserId)
       
-      // Add timeout to profile loading
-      const profilePromise = supabase
+      // Set a hard timeout - always stop loading after 2 seconds
+      const timeoutId = setTimeout(() => {
+        console.warn('⚠️ Profile loading timeout - continuing without profile')
+        setUserProfile(null)
+        setLoading(false)
+      }, 2000)
+      
+      const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('auth_user_id', authUserId)
         .single()
-        
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile load timeout')), 3000)
-      )
-      
-      const { data, error } = await Promise.race([profilePromise, timeoutPromise]) as any
+
+      // Clear timeout if we got a response
+      clearTimeout(timeoutId)
 
       if (error) {
         console.error('❌ Error loading user profile:', error)
@@ -132,7 +135,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     } catch (err) {
       console.error('💥 Profile loading failed:', err)
-      // If profile loading fails, still allow user to continue
       setUserProfile(null)
       setLoading(false)
     }
