@@ -15,6 +15,7 @@ function MainApp() {
 	const { user, userProfile, signOut, loading } = useAuth();
 	const [activeTab, setActiveTab] = useState<'admin' | 'warehouse' | 'shop'>('warehouse');
 	const [loadingTimeout, setLoadingTimeout] = useState(false);
+	const [skipProfile, setSkipProfile] = useState(false);
 
 	// Set a timeout for loading
 	React.useEffect(() => {
@@ -34,7 +35,7 @@ function MainApp() {
 	}
 
 	// Show loading while fetching user profile (but only briefly)
-    if (loading && !loadingTimeout) {
+    if (loading && !loadingTimeout && !skipProfile) {
         return (
             <div style={{ 
                 display: 'flex', 
@@ -46,6 +47,39 @@ function MainApp() {
                 gap: '16px'
             }}>
                 <div>🔄 Loading user profile...</div>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                    <button 
+                        onClick={() => setSkipProfile(true)}
+                        style={{
+                            padding: '12px 24px',
+                            backgroundColor: '#28A745',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        ⚡ Skip & Continue
+                    </button>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        style={{
+                            padding: '12px 24px',
+                            backgroundColor: '#FF6B35',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🔄 Refresh Page
+                    </button>
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center', maxWidth: '400px' }}>
+                    Stuck loading? Click "Skip & Continue" to use the app anyway, or "Refresh Page" to try again.
+                </div>
             </div>
         );
     }
