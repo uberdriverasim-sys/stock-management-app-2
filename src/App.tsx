@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { InventoryProvider } from './store/inventory';
 import { RequestProvider } from './store/requests';
 import { AuthProvider, useAuth } from './store/auth';
@@ -12,35 +12,60 @@ import { AuthLogin } from './components/AuthLogin';
 import { Branding } from './components/Branding';
 
 function MainApp() {
-	const { userProfile, signOut, loading } = useAuth();
+	const { user, userProfile, signOut, loading } = useAuth();
 	const [activeTab, setActiveTab] = useState<'admin' | 'warehouse' | 'shop'>('warehouse');
+	const [loadingTimeout, setLoadingTimeout] = useState(false);
 
-	// Show loading while fetching users
-	if (loading) {
-		return (
-			<div style={{ 
-				display: 'flex', 
-				justifyContent: 'center', 
-				alignItems: 'center', 
-				height: '100vh',
-				fontSize: '1.2rem'
-			}}>
-				🔄 Loading users from database...
-			</div>
-		);
-	}
+	// Set a timeout for loading
+	React.useEffect(() => {
+		if (loading) {
+			const timer = setTimeout(() => {
+				console.warn('⚠️ Loading timeout - showing login');
+				setLoadingTimeout(true);
+			}, 5000); // 5 second timeout
 
-	// Show login if no user
-	if (!userProfile) {
+			return () => clearTimeout(timer);
+		}
+	}, [loading]);
+
+	// Show login if no user OR if loading timed out
+	if (!user || loadingTimeout) {
 		return <AuthLogin />;
 	}
 
+	// Show loading while fetching user profile (but only briefly)
+    if (loading && !loadingTimeout) {
+        return (
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100vh',
+                fontSize: '1.2rem',
+                gap: '16px'
+            }}>
+                <div>🔄 Loading user profile...</div>
+            </div>
+        );
+    }
+
+	// If we have a user but no profile, create a temporary profile
+	const effectiveProfile = userProfile || {
+		id: 'temp',
+		name: user.email?.split('@')[0] || 'User',
+		username: user.email || 'user',
+		role: 'admin' as const,
+		city: undefined,
+		created_at: new Date().toISOString()
+	};
+
 	// Get available tabs based on user role
 	const getAvailableTabs = () => {
-		if (userProfile.role === 'admin') {
+		if (effectiveProfile.role === 'admin') {
 			return ['admin', 'warehouse', 'shop'];
 		}
-		if (userProfile.role === 'warehouse') {
+		if (effectiveProfile.role === 'warehouse') {
 			return ['warehouse'];
 		}
 		return ['shop'];
@@ -50,8 +75,8 @@ function MainApp() {
 	
 	// Set default tab based on user role
 	const getDefaultTab = () => {
-		if (userProfile.role === 'admin') return 'admin';
-		if (userProfile.role === 'warehouse') return 'warehouse';
+		if (effectiveProfile.role === 'admin') return 'admin';
+		if (effectiveProfile.role === 'warehouse') return 'warehouse';
 		return 'shop';
 	};
 
@@ -104,7 +129,7 @@ function MainApp() {
 						color: '#6C757D', 
 						margin: '0'
 					}}>
-						Welcome, {userProfile.name}!
+						Welcome, {effectiveProfile.name}!
 					</p>
 				</div>
 				
