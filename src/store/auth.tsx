@@ -28,49 +28,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔐 Initial session:', session?.user?.id)
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (!session?.user) {
-        setLoading(false)
-      }
-    })
+    let mounted = true
 
-    // Listen for auth changes - NO database queries here
+    const initializeAuth = async () => {
+      try {
+        console.log('🔐 Initializing auth...')
+        
+        // Get initial session with timeout
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 5000)
+        )
+        
+        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any
+        
+        if (!mounted) return
+        
+        if (error) {
+          console.error('❌ Session error:', error)
+          setLoading(false)
+          return
+        }
+
+        console.log('🔐 Initial session result:', session?.user?.id || 'No session')
+        setSession(session)
+        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          await loadUserProfile(session.user.id)
+        } else {
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('💥 Auth initialization failed:', error)
+        if (mounted) {
+          setSession(null)
+          setUser(null)
+          setUserProfile(null)
+          setLoading(false)
+        }
+      }
+    }
+
+    // Listen for auth changes - simplified
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 Auth state changed:', event)
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
+      
+      console.log('🔐 Auth state changed:', event, session?.user?.id || 'No user')
       setSession(session)
       setUser(session?.user ?? null)
       
-      if (!session?.user) {
+      if (session?.user && event === 'SIGNED_IN') {
+        await loadUserProfile(session.user.id)
+      } else if (!session?.user) {
         setUserProfile(null)
         setLoading(false)
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    initializeAuth()
 
-  // Separate useEffect for profile loading - this is the key fix!
-  useEffect(() => {
-    if (session?.user) {
-      console.log('👤 Session found, loading profile for:', session.user.id)
-      loadUserProfile(session.user.id)
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
     }
-  }, [session])
+  }, [])
 
   const loadUserProfile = async (authUserId: string) => {
     try {
       console.log('👤 Loading user profile for:', authUserId)
-      const { data, error } = await supabase
+      
+      // Add timeout to profile loading
+      const profilePromise = supabase
         .from('users')
         .select('*')
         .eq('auth_user_id', authUserId)
         .single()
+        
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile load timeout')), 3000)
+      )
+      
+      const { data, error } = await Promise.race([profilePromise, timeoutPromise]) as any
 
       if (error) {
         console.error('❌ Error loading user profile:', error)
@@ -90,7 +131,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserProfile(data)
       setLoading(false)
     } catch (err) {
-      console.error('💥 Unexpected error loading user profile:', err)
+      console.error('💥 Profile loading failed:', err)
+      // If profile loading fails, still allow user to continue
       setUserProfile(null)
       setLoading(false)
     }
