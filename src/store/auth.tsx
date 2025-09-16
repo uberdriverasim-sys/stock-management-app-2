@@ -34,13 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log('🔐 Initializing auth...')
         
-        // Get initial session with timeout
-        const sessionPromise = supabase.auth.getSession()
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session timeout')), 5000)
-        )
+        // Desktop browsers sometimes have issues with getSession on refresh
+        // Add a delay to let the browser settle
+        if (!navigator.userAgent.includes('Mobile')) {
+          console.log('🖥️ Desktop browser detected - adding delay')
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
         
-        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any
+        const { data: { session }, error } = await supabase.auth.getSession()
         
         if (!mounted) return
         
@@ -70,6 +71,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Set a hard timeout for the entire initialization
+    const initTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('🚨 Auth initialization timeout - forcing reset')
+        setSession(null)
+        setUser(null)
+        setUserProfile(null)
+        setLoading(false)
+      }
+    }, 4000)
+
     // Listen for auth changes - simplified
     const {
       data: { subscription },
@@ -92,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false
+      clearTimeout(initTimeout)
       subscription.unsubscribe()
     }
   }, [])
