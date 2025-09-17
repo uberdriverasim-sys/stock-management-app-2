@@ -112,12 +112,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('👤 Loading user profile for:', authUserId)
       
-      // Set a hard timeout - always stop loading after 1 second
+      // Set a hard timeout - always stop loading after 2 seconds
       const timeoutId = setTimeout(() => {
         console.log('⚠️ Profile loading timeout - continuing without profile')
         setUserProfile(null)
         setLoading(false)
-      }, 1000) // Reduced to 1 second
+      }, 2000) // Increased to 2 seconds for database queries
       
       const { data, error } = await supabase
         .from('users')
@@ -128,6 +128,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear timeout if we got a response
       clearTimeout(timeoutId)
 
+      if (error && error.code === 'PGRST116') {
+        // No profile found - this might be an existing user without a profile
+        console.log('⚠️ No user profile found, creating one from auth metadata...')
+        const authUser = user
+        if (authUser?.user_metadata) {
+          const metadata = authUser.user_metadata
+          const profileData = {
+            auth_user_id: authUserId,
+            username: metadata.username || authUser.email?.split('@')[0] || 'user',
+            name: metadata.name || authUser.email?.split('@')[0] || 'User',
+            role: (metadata.role as 'admin' | 'warehouse' | 'shop') || 'shop',
+            city: metadata.city as 'SYDNEY' | 'MELBOURNE' | 'BRISBANE' | undefined
+          }
+          
+          const { data: newProfile, error: createError } = await supabase
+            .from('users')
+            .insert([profileData])
+            .select()
+            .single()
+            
+          if (createError) {
+            console.error('❌ Failed to create missing profile:', createError)
+            setUserProfile(null)
+          } else {
+            console.log('✅ Created missing user profile:', newProfile)
+            setUserProfile(newProfile)
+          }
+        } else {
+          console.log('⚠️ No metadata available to create profile')
+          setUserProfile(null)
+        }
+        setLoading(false)
+        return
+      }
+      
       if (error) {
         console.error('❌ Error loading user profile:', error)
         setUserProfile(null)
@@ -192,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true)
       console.log('📝 Signing up:', email, metadata)
       
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -200,12 +235,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
 
-      if (error) {
-        console.error('❌ Sign up error:', error)
-        return { success: false, message: error.message }
+      if (authError) {
+        console.error('❌ Sign up error:', authError)
+        return { success: false, message: authError.message }
       }
 
-      console.log('✅ Sign up successful')
+      if (!authData.user) {
+        console.error('❌ No user returned from signup')
+        return { success: false, message: 'Failed to create user account' }
+      }
+
+      console.log('✅ Auth signup successful, creating user profile...')
+
+      // Create user profile record in the users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert([{
+          auth_user_id: authData.user.id,
+          username: metadata.username,
+          name: metadata.name,
+          role: metadata.role,
+          city: metadata.city
+        }])
+
+      if (profileError) {
+        console.error('❌ Error creating user profile:', profileError)
+        // If profile creation fails, we should clean up the auth user
+        await supabase.auth.signOut()
+        return { success: false, message: `Profile creation failed: ${profileError.message}` }
+      }
+
+      console.log('✅ User profile created successfully')
       return { success: true, message: 'Account created successfully' }
     } catch (err) {
       console.error('💥 Sign up error:', err)
