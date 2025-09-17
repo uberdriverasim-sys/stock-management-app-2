@@ -18,6 +18,12 @@ export function AuthLogin() {
     setError('')
     setLoading(true)
 
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setLoading(false)
+      setError('Login timed out. Please try again.')
+    }, 10000) // 10 second timeout
+
     try {
       if (isSignUp) {
         const result = await signUp(email.trim(), password, {
@@ -46,6 +52,7 @@ export function AuthLogin() {
     } catch (err) {
       setError('An error occurred')
     } finally {
+      clearTimeout(timeoutId)
       setLoading(false)
     }
   }

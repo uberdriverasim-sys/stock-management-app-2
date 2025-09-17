@@ -84,12 +84,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
       
+      console.log('🔄 Auth state change:', event, session?.user?.id || 'No user')
+      
       setSession(session)
       setUser(session?.user ?? null)
       
       if (session?.user && event === 'SIGNED_IN') {
+        console.log('👤 Loading profile after sign in...')
         await loadUserProfile(session.user.id)
       } else if (!session?.user) {
+        console.log('👤 No user - clearing profile')
         setUserProfile(null)
         setLoading(false)
       }
@@ -159,16 +163,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('❌ Sign in error:', error)
+        setLoading(false) // Make sure to stop loading on error
         return { success: false, message: error.message }
       }
 
       console.log('✅ Sign in successful')
+      // Don't set loading to false here - let the auth state change handler do it
       return { success: true, message: 'Sign in successful' }
     } catch (err) {
       console.error('💥 Sign in error:', err)
+      setLoading(false) // Make sure to stop loading on error
       return { success: false, message: 'Sign in failed' }
-    } finally {
-      setLoading(false)
     }
   }
 
