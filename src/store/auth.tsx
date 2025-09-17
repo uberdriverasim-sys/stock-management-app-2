@@ -27,6 +27,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // DIAGNOSTIC: Log auth state changes
+  React.useEffect(() => {
+    console.log('🔍 AUTH DIAGNOSTIC:', {
+      hasUser: !!user,
+      hasProfile: !!userProfile,
+      isLoading: loading,
+      sessionId: session?.user?.id || 'NO SESSION',
+      timestamp: new Date().toISOString()
+    });
+  }, [user, userProfile, loading, session]);
+
   useEffect(() => {
     let mounted = true
 
