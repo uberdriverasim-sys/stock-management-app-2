@@ -27,28 +27,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // DIAGNOSTIC: Log auth state changes
-  React.useEffect(() => {
-    console.log('🔍 AUTH DIAGNOSTIC:', {
-      hasUser: !!user,
-      hasProfile: !!userProfile,
-      isLoading: loading,
-      sessionId: session?.user?.id || 'NO SESSION',
-      timestamp: new Date().toISOString()
-    });
-  }, [user, userProfile, loading, session]);
 
   useEffect(() => {
     let mounted = true
 
     const initializeAuth = async () => {
       try {
-        console.log('🔐 Initializing auth...')
-        
         // Desktop browsers sometimes have issues with getSession on refresh
         // Add a delay to let the browser settle
         if (!navigator.userAgent.includes('Mobile')) {
-          console.log('🖥️ Desktop browser detected - adding delay')
           await new Promise(resolve => setTimeout(resolve, 100))
         }
         
@@ -62,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        console.log('🔐 Initial session result:', session?.user?.id || 'No session')
         setSession(session)
         setUser(session?.user ?? null)
         
@@ -85,7 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set a hard timeout for the entire initialization
     const initTimeout = setTimeout(() => {
       if (mounted && loading) {
-        console.warn('🚨 Auth initialization timeout - forcing reset')
         setSession(null)
         setUser(null)
         setUserProfile(null)
@@ -99,7 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
       
-      console.log('🔐 Auth state changed:', event, session?.user?.id || 'No user')
       setSession(session)
       setUser(session?.user ?? null)
       
@@ -126,7 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Set a hard timeout - always stop loading after 2 seconds
       const timeoutId = setTimeout(() => {
-        console.warn('⚠️ Profile loading timeout - continuing without profile')
         setUserProfile(null)
         setLoading(false)
       }, 2000)

@@ -17,23 +17,11 @@ function MainApp() {
 	const [loadingTimeout, setLoadingTimeout] = useState(false);
 	const [skipProfile, setSkipProfile] = useState(false);
 
-	// DIAGNOSTIC: Log everything to console
-	React.useEffect(() => {
-		console.log('🔍 DIAGNOSTIC - App State:', {
-			user: user?.id || 'NO USER',
-			userProfile: userProfile?.name || 'NO PROFILE',
-			loading,
-			loadingTimeout,
-			skipProfile,
-			timestamp: new Date().toISOString()
-		});
-	}, [user, userProfile, loading, loadingTimeout, skipProfile]);
 
 	// Set a timeout for loading
 	React.useEffect(() => {
 		if (loading) {
 			const timer = setTimeout(() => {
-				console.warn('⚠️ Loading timeout - showing login');
 				setLoadingTimeout(true);
 			}, 1000); // 1 second timeout
 
@@ -43,24 +31,7 @@ function MainApp() {
 
 	// Show login if no user OR if loading timed out
 	if (!user || loadingTimeout) {
-		return (
-			<div>
-				<div style={{ 
-					position: 'fixed', 
-					top: '10px', 
-					right: '10px', 
-					background: 'red', 
-					color: 'white', 
-					padding: '5px 10px',
-					borderRadius: '4px',
-					fontSize: '12px',
-					zIndex: 9999
-				}}>
-					V2024.12.18-LATEST
-				</div>
-				<AuthLogin />
-			</div>
-		);
+		return <AuthLogin />;
 	}
 
 	// Show loading while fetching user profile (but only briefly)
@@ -76,27 +47,11 @@ function MainApp() {
                 gap: '16px',
                 backgroundColor: '#f8f9fa'
             }}>
-                <div style={{ 
-                    position: 'fixed', 
-                    top: '10px', 
-                    right: '10px', 
-                    background: 'blue', 
-                    color: 'white', 
-                    padding: '5px 10px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    zIndex: 9999
-                }}>
-                    LOADING-V2024.12.18-LATEST
-                </div>
                 <div style={{ fontSize: '2rem' }}>🔄</div>
                 <div>Loading user profile...</div>
                 <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
                     <button 
-                        onClick={() => {
-                            console.log('🚀 Skipping profile loading');
-                            setSkipProfile(true);
-                        }}
+                        onClick={() => setSkipProfile(true)}
                         style={{
                             padding: '15px 30px',
                             backgroundColor: '#28A745',
@@ -112,7 +67,6 @@ function MainApp() {
                     </button>
                     <button 
                         onClick={() => {
-                            console.log('🔄 Clearing storage and refreshing');
                             localStorage.clear();
                             sessionStorage.clear();
                             window.location.reload();
@@ -304,40 +258,12 @@ function MainApp() {
 }
 
 export default function App() {
-	// DIAGNOSTIC: Force show deployment info
-	React.useEffect(() => {
-		console.log('🚀 APP LOADED - DEPLOYMENT VERSION: 2024.12.18-DIAGNOSTIC');
-		
-		// Show alert on page load to confirm we're running latest code
-		setTimeout(() => {
-			if (window.location.hostname !== 'localhost') {
-				alert('🔍 DIAGNOSTIC: App loaded with version 2024.12.18-DIAGNOSTIC');
-			}
-		}, 1000);
-	}, []);
-
 	return (
 		<LogoProvider>
 			<AuthProvider>
 				<InventoryProvider>
 					<RequestProvider>
-						<div>
-							{/* DIAGNOSTIC: Always visible version indicator */}
-							<div style={{
-								position: 'fixed',
-								top: '0',
-								left: '0',
-								background: 'red',
-								color: 'white',
-								padding: '5px',
-								fontSize: '12px',
-								zIndex: 99999,
-								fontFamily: 'monospace'
-							}}>
-								DIAGNOSTIC-2024.12.18
-							</div>
-							<MainApp />
-						</div>
+						<MainApp />
 					</RequestProvider>
 				</InventoryProvider>
 			</AuthProvider>
