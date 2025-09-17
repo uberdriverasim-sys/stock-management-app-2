@@ -113,6 +113,18 @@ function MainApp() {
 		created_at: new Date().toISOString()
 	};
 
+	// TEMPORARY: Skip profile loading entirely if it's taking too long
+	React.useEffect(() => {
+		if (user && !userProfile && !skipProfile) {
+			const skipTimer = setTimeout(() => {
+				console.log('🚀 Auto-skipping profile loading after 3 seconds');
+				setSkipProfile(true);
+			}, 3000); // Auto-skip after 3 seconds
+
+			return () => clearTimeout(skipTimer);
+		}
+	}, [user, userProfile, skipProfile]);
+
 	// Get available tabs based on user role
 	const getAvailableTabs = () => {
 		if (effectiveProfile.role === 'admin') {

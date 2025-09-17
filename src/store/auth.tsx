@@ -112,11 +112,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('👤 Loading user profile for:', authUserId)
       
-      // Set a hard timeout - always stop loading after 2 seconds
+      // Set a hard timeout - always stop loading after 1 second
       const timeoutId = setTimeout(() => {
+        console.log('⚠️ Profile loading timeout - continuing without profile')
         setUserProfile(null)
         setLoading(false)
-      }, 2000)
+      }, 1000) // Reduced to 1 second
       
       const { data, error } = await supabase
         .from('users')
