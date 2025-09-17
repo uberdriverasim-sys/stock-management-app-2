@@ -31,7 +31,24 @@ function MainApp() {
 
 	// Show login if no user OR if loading timed out
 	if (!user || loadingTimeout) {
-		return <AuthLogin />;
+		return (
+			<div>
+				<div style={{ 
+					position: 'fixed', 
+					top: '10px', 
+					right: '10px', 
+					background: 'red', 
+					color: 'white', 
+					padding: '5px 10px',
+					borderRadius: '4px',
+					fontSize: '12px',
+					zIndex: 9999
+				}}>
+					V2024.12.18-LATEST
+				</div>
+				<AuthLogin />
+			</div>
+		);
 	}
 
 	// Show loading while fetching user profile (but only briefly)
@@ -47,6 +64,19 @@ function MainApp() {
                 gap: '16px',
                 backgroundColor: '#f8f9fa'
             }}>
+                <div style={{ 
+                    position: 'fixed', 
+                    top: '10px', 
+                    right: '10px', 
+                    background: 'blue', 
+                    color: 'white', 
+                    padding: '5px 10px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    zIndex: 9999
+                }}>
+                    LOADING-V2024.12.18-LATEST
+                </div>
                 <div style={{ fontSize: '2rem' }}>🔄</div>
                 <div>Loading user profile...</div>
                 <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
