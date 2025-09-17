@@ -23,7 +23,7 @@ function MainApp() {
 			const timer = setTimeout(() => {
 				console.warn('⚠️ Loading timeout - showing login');
 				setLoadingTimeout(true);
-			}, 3000); // 3 second timeout
+			}, 1000); // 1 second timeout
 
 			return () => clearTimeout(timer);
 		}
@@ -44,41 +44,64 @@ function MainApp() {
                 alignItems: 'center', 
                 height: '100vh',
                 fontSize: '1.2rem',
-                gap: '16px'
+                gap: '16px',
+                backgroundColor: '#f8f9fa'
             }}>
-                <div>🔄 Loading user profile...</div>
+                <div style={{ fontSize: '2rem' }}>🔄</div>
+                <div>Loading user profile...</div>
                 <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
                     <button 
-                        onClick={() => setSkipProfile(true)}
+                        onClick={() => {
+                            console.log('🚀 Skipping profile loading');
+                            setSkipProfile(true);
+                        }}
                         style={{
-                            padding: '12px 24px',
+                            padding: '15px 30px',
                             backgroundColor: '#28A745',
                             color: 'white',
                             border: 'none',
                             borderRadius: '8px',
-                            fontSize: '1rem',
-                            cursor: 'pointer'
+                            fontSize: '1.1rem',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
                         }}
                     >
-                        ⚡ Skip & Continue
+                        ⚡ SKIP & CONTINUE
                     </button>
                     <button 
-                        onClick={() => window.location.reload()}
+                        onClick={() => {
+                            console.log('🔄 Clearing storage and refreshing');
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            window.location.reload();
+                        }}
                         style={{
-                            padding: '12px 24px',
+                            padding: '15px 30px',
                             backgroundColor: '#FF6B35',
                             color: 'white',
                             border: 'none',
                             borderRadius: '8px',
-                            fontSize: '1rem',
-                            cursor: 'pointer'
+                            fontSize: '1.1rem',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
                         }}
                     >
-                        🔄 Refresh Page
+                        🔄 CLEAR & REFRESH
                     </button>
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center', maxWidth: '400px' }}>
-                    Stuck loading? Click "Skip & Continue" to use the app anyway, or "Refresh Page" to try again.
+                <div style={{ 
+                    fontSize: '1rem', 
+                    color: '#dc3545', 
+                    textAlign: 'center', 
+                    maxWidth: '500px',
+                    backgroundColor: '#fff3cd',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    border: '1px solid #ffeaa7'
+                }}>
+                    <strong>STUCK LOADING?</strong><br/>
+                    Click <strong>"SKIP & CONTINUE"</strong> to use the app immediately<br/>
+                    or <strong>"CLEAR & REFRESH"</strong> to reset everything
                 </div>
             </div>
         );
